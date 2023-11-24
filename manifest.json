@@ -1,0 +1,27 @@
+{
+  "manifest_version": 3,
+  "name": "Masquer les éléments Amis sur TikTok",
+  "version": "1.0",
+  "host_permissions": [
+    "*://*.tiktok.com/*","*://mon.tiktokv.com/monitor_browser/collect/batch/*"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "images/16.png",
+      "48": "images/48.png",
+      "128": "images/128.png"
+    }
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://www.tiktok.com/*"],
+      "js": ["script.js"]
+    }
+  ],
+  "icons": {
+    "16": "images/16.png",
+    "48": "images/48.png",
+    "128": "images/128.png"
+  }
+}
