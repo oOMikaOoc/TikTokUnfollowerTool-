@@ -8,27 +8,51 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
   }
 });
 
-function cliquerSurTousLesAbonnements() {
+
+/**
+ * Fonction asynchrone pour cliquer sur tous les boutons "Abonnements" dans une page TikTok.
+ * Elle parcourt chaque bouton correspondant au sélecteur spécifié, effectue un clic, 
+ * puis attend un délai aléatoire avant de passer au bouton suivant.
+ * 
+ * @param {number} minDelai - Le délai minimum (en millisecondes) avant de cliquer sur le bouton suivant.
+ * @param {number} maxDelai - Le délai maximum (en millisecondes) pour le même but.
+ * 
+ * La fonction commence par mettre à jour et afficher le total des boutons "Abonnements" présents.
+ * Si un observateur DOM (observerDOM) est actif, il est déconnecté pour éviter les interférences pendant l'exécution de la fonction.
+ * Chaque bouton "Abonnements" trouvé est cliqué. Après chaque clic, la fonction met à jour un compteur et attend un délai aléatoire 
+ * compris entre minDelai et maxDelai avant de passer au bouton suivant. 
+ * Ce délai aléatoire permet d'éviter les comportements qui semblent automatisés et peut aider à respecter 
+ * les limites de fréquence d'actions imposées par TikTok.
+ * Après avoir parcouru tous les boutons, l'observateur DOM est réactivé pour continuer à surveiller les changements dans la page.
+ */
+
+function delai(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function cliquerSurTousLesAbonnements(minDelai = 600, maxDelai = 1300) {
   total = mettreAJourCompteurAbonnements();
   if (observerDOM) {
     observerDOM.disconnect(); // Désactive l'observateur
   }
   compteurDeBoutonClique = 0;
-  const boutonsAbonnements = document.querySelectorAll('.tiktok-s6a072-Button-StyledFollowButtonV2'); // Remplacez par le bon sélecteur
-  boutonsAbonnements.forEach((btn) => {
-    const delaiAleatoire = Math.floor(Math.random() * (900 - 400 + 1)) + 400;
-    setTimeout(() => {
-      if (btn.textContent.includes('Abonnements')) {
-        btn.click();
-        compteurDeBoutonClique += 1
-        mettreAJourCompteur(compteurDeBoutonClique, total);
-      }
-    }, delaiAleatoire);
-  });
+  const boutonsAbonnements = document.querySelectorAll('.tiktok-s6a072-Button-StyledFollowButtonV2');
+
+  for (const btn of boutonsAbonnements) {
+    const delaiAleatoire = Math.floor(Math.random() * (maxDelai - minDelai + 1)) + minDelai;
+    if (btn.textContent.includes('Abonnements')) {
+      btn.click();
+      compteurDeBoutonClique += 1;
+      mettreAJourCompteur(compteurDeBoutonClique, total);
+    }
+    await delai(delaiAleatoire);
+  }
+
   if (observerDOM) {
     observerDOM.observe(document.body, { childList: true, subtree: true });
   }
 }
+
 
 function mettreAJourCompteur(index, total) {
   const compteurDiv = document.getElementById('compteur-abonnement');
@@ -121,8 +145,16 @@ function mettreAJourCompteurAbonnements() {
   return compteurAbonnements;
 }
 
+function triggerScrollReload(element) {
+  const currentScroll = element.scrollTop;
+  // Défilement vers le haut
+  element.scrollTop = currentScroll - 50;
 
-
+  // Retour en bas pour déclencher le rechargement
+  setTimeout(() => {
+    element.scrollTop = currentScroll -5;
+  }, 200); // Retarde légèrement le retour pour permettre la détection du changement
+}
 
 function compterLiNonMasques() {
   const elementsLi = document.querySelectorAll('div[class*="DivUserListContainer"] li');
@@ -148,6 +180,10 @@ function observerDOMmutation() {
       if (compterLiNonMasques() > nombreDeLiConserve) {
         ajouterDivCompteur()
         supprimerElementsAmis(nombreDeLiConserve);
+
+        // Utilisation de la fonction triggerScrollReload pour simuler un scroll haut puis bas
+        let containerScroll = document.querySelector('div[class*="DivUserListContainer"]');
+        triggerScrollReload(containerScroll);
       }
     }
   });
